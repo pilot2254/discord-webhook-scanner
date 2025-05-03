@@ -1,3 +1,8 @@
+# Files from Discord Webhook Scanner
+data
+logs
+.env
+
 # Logs
 logs
 *.log
