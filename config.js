@@ -1,6 +1,10 @@
 /**
- * Configuration file for Discord Webhook Scanner
+ * Configuration Module
+ *
+ * Provides configuration settings for the Discord Webhook Scanner.
+ * All application settings are centralized here for easy modification.
  */
+
 export default {
   // GitHub API configuration
   github: {
@@ -8,13 +12,30 @@ export default {
     // Set GITHUB_TOKEN in your environment or .env file
     searchQueries: ["discord.com/api/webhooks", "discordapp.com/api/webhooks"],
     pagesPerScan: 5,
-    scanIntervalHours: 12, // How often to scan GitHub (in hours)
+  },
+
+  // Scanner configuration
+  scanner: {
+    // Whether to validate webhooks before saving them
+    validateBeforeSaving: true,
+    // Maximum number of concurrent validation requests
+    maxConcurrentValidations: 5,
+    // Timeout for webhook validation requests (in milliseconds)
+    validationTimeout: 5000,
+    // How many webhooks to find before saving incrementally (in continuous mode)
+    incrementalSaveInterval: 5,
+    // Whether to continue from previous scan state in continuous mode
+    continuePreviousScan: true,
   },
 
   // Webhook storage configuration
   storage: {
     dataDir: "data",
     chunkSizeBytes: 1024 * 1024, // 1MB
+    // Whether to clear existing chunks before saving new webhooks
+    clearExistingChunks: false,
+    // Whether to deduplicate webhooks before saving
+    deduplicateWebhooks: true,
   },
 
   // Notification configuration
@@ -34,7 +55,7 @@ export default {
         {
           name: "Why am I receiving this?",
           value:
-            "This is a friendly notification from a security researcher. This message was sent using your exposed webhook.",
+            "This is a friendly notification from a security researcher Mike. This message was sent using your exposed webhook.",
         },
       ],
       footer: {
@@ -45,6 +66,8 @@ export default {
     autoNotifyNew: false,
     // Set to true to validate webhooks before sending notifications
     validateBeforeNotify: true,
+    // Delay between notifications to avoid rate limiting (in milliseconds)
+    notificationDelay: 1000,
   },
 
   // Logging configuration
@@ -54,5 +77,7 @@ export default {
     logFilePath: "logs/scanner.log",
     maxLogFileSizeMB: 10,
     maxLogFiles: 5,
+    // Whether to log webhook URLs (may expose sensitive information)
+    logWebhookUrls: false,
   },
 }

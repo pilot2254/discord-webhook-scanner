@@ -1,13 +1,14 @@
 {
   "name": "discord-webhook-scanner",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "A tool that continuously scans GitHub for exposed Discord webhooks",
   "type": "module",
-  "main": "scanner.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node scanner.js",
-    "start:background": "nohup node scanner.js > logs/output.log 2> logs/error.log &",
-    "stop": "pkill -f 'node scanner.js' || echo 'No process found'"
+    "start": "node index.js",
+    "scan": "node index.js --scan",
+    "validate": "node index.js --validate",
+    "notify": "node index.js --notify"
   },
   "keywords": ["discord", "webhook", "security", "github", "scanner"],
   "author": "",

@@ -1,15 +1,17 @@
 # Discord Webhook Scanner
 
-A Node.js application that scans public GitHub repositories for potentially exposed Discord webhook URLs. This tool is designed to promote webhook security awareness, not to exploit vulnerabilities.
+A modular Node.js application that continuously scans public GitHub repositories for potentially exposed Discord webhook URLs, validates them, and allows sending custom messages.
 
 ## Features
 
-- Continuously scans GitHub repositories for exposed Discord webhook URLs
-- Configurable scan intervals and search queries
-- Stores webhooks in chunked JSON files (max 1MB per chunk)
-- Optional notifications to webhook owners about their exposed webhooks
+- Interactive terminal interface
+- Continuous scanning of GitHub repositories for exposed Discord webhook URLs
+- Webhook validation before saving (configurable)
+- Storage of webhooks in chunked JSON files
+- Send custom messages to all webhooks or specific chunks
+- Validate webhooks to check if they're still active
 - Detailed logging with rotation
-- Runs 24/7 in the background without requiring PM2
+- Modular architecture for easy maintenance and development
 
 ## Ethical Guidelines
 
@@ -23,94 +25,70 @@ This tool is designed for educational and security awareness purposes only. Plea
 ## Installation
 
 1. Clone this repository:
-   ```
-   git clone https://github.com/pilot2254/discord-webhook-scanner.git
+   \`\`\`
+   git clone https://github.com/yourusername/discord-webhook-scanner.git
    cd discord-webhook-scanner
-   ```
+   \`\`\`
 
 2. Install dependencies:
-   ```
+   \`\`\`
    npm install
-   ```
+   \`\`\`
 
-3. Create necessary directories:
-   ```
-   mkdir -p data logs
-   ```
-
-4. Create a `.env` file from the example:
-   ```
+3. Create a `.env` file from the example:
+   \`\`\`
    cp .env.example .env
-   ```
+   \`\`\`
 
-5. Edit the `.env` file and add your GitHub API token (Permission required `public_repo`):
-   ```
+4. Edit the `.env` file and add your GitHub API token:
+   \`\`\`
    GITHUB_TOKEN=your_github_token_here
-   ```
-
-6. Make the run and stop scripts executable:
-   ```
-   chmod +x run.sh stop.sh
-   ```
+   \`\`\`
 
 ## Usage
 
-### Starting the Scanner
+Start the application:
 
-To start the scanner in the background (will run 24/7):
+\`\`\`
+npm start
+\`\`\`
 
-```
-./run.sh
-```
+This will display the interactive menu with the following options:
 
-This will:
-- Start the scanner in the background
-- Save logs to the `logs` directory
-- Continue running even if you close your terminal
-
-### Stopping the Scanner
-
-To stop the scanner:
-
-```
-./stop.sh
-```
-
-### Viewing Logs
-
-To view the scanner logs:
-
-```
-tail -f logs/scanner.log
-```
-
-### After Raspberry Pi Reboot
-
-The scanner will NOT automatically start when your Raspberry Pi reboots. After each reboot, you'll need to manually start it:
-
-```
-cd /path/to/discord-webhook-scanner
-./run.sh
-```
+1. **Start continuous scanning** - Continuously scan GitHub without waiting between scans
+2. **Perform single scan** - Run a single scan and return to the menu
+3. **Send message to all webhooks** - Send a custom message to all stored webhooks
+4. **Send message to specific chunk** - Send a custom message to webhooks in a specific chunk
+5. **List available chunks** - Show all available webhook chunks
+6. **Count total webhooks** - Display the total number of stored webhooks
+7. **Validate all webhooks** - Check which webhooks are still active
+8. **Exit** - Exit the application
 
 ## Configuration
 
-The application is configured through the `config.js` file. Here are the main configuration options:
+The application is highly configurable through the `src/config.js` file. Here are the main configuration sections:
 
 ### GitHub Configuration
 - `searchQueries`: Array of search terms to use when scanning GitHub
 - `pagesPerScan`: Number of pages to scan per query
-- `scanIntervalHours`: How often to scan GitHub (in hours)
+
+### Scanner Configuration
+- `validateBeforeSaving`: Whether to validate webhooks before saving them
+- `maxConcurrentValidations`: Maximum number of concurrent validation requests
+- `validationTimeout`: Timeout for webhook validation requests
 
 ### Storage Configuration
 - `dataDir`: Directory to store webhook data
 - `chunkSizeBytes`: Maximum size of each webhook storage file
+- `clearExistingChunks`: Whether to clear existing chunks before saving new webhooks
+- `deduplicateWebhooks`: Whether to deduplicate webhooks before saving
 
 ### Notification Configuration
 - `enabled`: Whether to enable notifications
-- `message`: The message to send to webhook owners
+- `message`: The default message to send to webhook owners
 - `autoNotifyNew`: Whether to automatically notify newly discovered webhooks
 - `validateBeforeNotify`: Whether to validate webhooks before sending notifications
+- `notificationDelay`: Delay between notifications to avoid rate limiting
 
 ### Logging Configuration
 - `level`: Log level (debug, info, warn, error)
@@ -118,39 +96,31 @@ The application is configured through the `config.js` file. Here are the main co
 - `logFilePath`: Path to the log file
 - `maxLogFileSizeMB`: Maximum size of log files
 - `maxLogFiles`: Maximum number of log files to keep
+- `logWebhookUrls`: Whether to log webhook URLs (may expose sensitive information)
 
-## How It Works
+## Project Structure
 
-1. The scanner searches GitHub for code containing Discord webhook URLs
-2. When it finds potential webhooks, it extracts and stores them
-3. On subsequent scans, it identifies new webhooks that weren't previously found
-4. Optionally, it can send notifications to webhook owners
-5. All activities are logged for monitoring and debugging
+The application is organized into the following modules:
 
-## Running on Raspberry Pi
+- `index.js` - Main entry point
+- `src/cli.js` - CLI interface and menu
+- `src/scanner.js` - GitHub scanning functionality
+- `src/webhook.js` - Webhook management (validation, sending messages)
+- `src/storage.js` - File storage operations
+- `src/logger.js` - Logging functionality
+- `src/config.js` - Configuration settings
+- `src/utils.js` - Utility functions
 
-This application is designed to be lightweight and can run on a Raspberry Pi. The setup process is the same as described above.
+This modular structure makes the code more maintainable and easier to develop.
 
-For optimal performance on Raspberry Pi:
-- Consider increasing the scan interval (e.g., 24 hours instead of 12)
-- Monitor memory usage during the first few scans
+## Development
 
-## Troubleshooting
+To extend or modify the application:
 
-### Scanner Not Starting
-- Check if the scanner is already running: `pgrep -f "node scanner.js"`
-- Ensure your GitHub token is correctly set in the `.env` file
-- Check the logs for errors: `cat logs/error.log`
-
-### Rate Limiting
-If you encounter GitHub API rate limits:
-- Increase the scan interval in `config.js`
-- The scanner will automatically wait for rate limits to reset
-
-### Memory Issues
-If you encounter memory problems on your Raspberry Pi:
-- Reduce the number of pages scanned per query in `config.js`
-- Consider scanning fewer queries at a time
+1. Fork the repository
+2. Make your changes in the appropriate module
+3. Test your changes
+4. Submit a pull request
 
 ## License
 
