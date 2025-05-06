@@ -147,6 +147,12 @@ export async function scanGitHub(token, pages, saveIncrementally = false, saveIn
 
   // Start from the last query if continuing
   for (let queryIndex = continuePrevious ? scanState.lastQuery : 0; queryIndex < queries.length; queryIndex++) {
+    // Load previous scan state if continuing
+    if (continuePrevious) {
+      await loadScanState()
+    } else {
+      await resetScanState()
+    }
     const query = queries[queryIndex]
     scanState.lastQuery = queryIndex
 
@@ -306,10 +312,13 @@ export async function scanGitHub(token, pages, saveIncrementally = false, saveIn
     await savePendingWebhooks()
   }
 
-  // Reset scan state if we've completed all queries
+  // In continuous mode, we want to maintain the scan state but reset the query and page counters
   if (scanState.lastQuery >= queries.length - 1) {
-    logger.info("Completed all queries, resetting scan state")
-    await resetScanState()
+    logger.info("Completed all queries, preparing for next cycle")
+    // Don't reset the entire scan state, just the query and page counters
+    scanState.lastQuery = 0
+    scanState.lastPage = 0
+    await saveScanState()
   } else {
     await saveScanState()
   }
