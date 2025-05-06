@@ -33,6 +33,7 @@ let scanState = {
   lastPage: 0,
   scannedRepos: new Set(),
   scannedFiles: new Set(),
+  foundWebhooks: new Set(), // Track webhooks found in the current session
 }
 
 /**
@@ -51,10 +52,11 @@ async function loadScanState() {
         lastPage: state.lastPage || 0,
         scannedRepos: new Set(state.scannedRepos || []),
         scannedFiles: new Set(state.scannedFiles || []),
+        foundWebhooks: new Set(state.foundWebhooks || []), // Load found webhooks
       }
 
       logger.info(
-        `Loaded scan state: Query ${scanState.lastQuery}, Page ${scanState.lastPage}, ${scanState.scannedRepos.size} repos, ${scanState.scannedFiles.size} files`,
+        `Loaded scan state: Query ${scanState.lastQuery}, Page ${scanState.lastPage}, ${scanState.scannedRepos.size} repos, ${scanState.scannedFiles.size} files, ${scanState.foundWebhooks.size} webhooks`,
       )
     } catch (error) {
       // If file doesn't exist or is invalid, use default state
@@ -77,6 +79,7 @@ async function saveScanState() {
       lastPage: scanState.lastPage,
       scannedRepos: Array.from(scanState.scannedRepos),
       scannedFiles: Array.from(scanState.scannedFiles),
+      foundWebhooks: Array.from(scanState.foundWebhooks), // Save found webhooks
     }
 
     await fs.writeFile(SCAN_STATE_FILE, JSON.stringify(state, null, 2))
@@ -95,6 +98,7 @@ export async function resetScanState() {
     lastPage: 0,
     scannedRepos: new Set(),
     scannedFiles: new Set(),
+    foundWebhooks: new Set(),
   }
 
   try {
@@ -200,13 +204,18 @@ export async function scanGitHub(token, pages, saveIncrementally = false, saveIn
                 for (const webhook of matches) {
                   // Skip if we already know this webhook is invalid
                   if (invalidWebhooks.has(webhook)) {
+                    logger.debug(`Skipping already known invalid webhook: ${webhook}`)
                     continue
                   }
 
-                  // Skip if we already have this webhook
-                  if (webhooks.has(webhook)) {
+                  // Skip if we already have this webhook in the current session
+                  if (scanState.foundWebhooks.has(webhook)) {
+                    logger.debug(`Skipping duplicate webhook in current session: ${webhook}`)
                     continue
                   }
+
+                  // Mark this webhook as found in the current session
+                  scanState.foundWebhooks.add(webhook)
 
                   // If validation before saving is enabled, validate the webhook
                   if (config.scanner.validateBeforeSaving) {
