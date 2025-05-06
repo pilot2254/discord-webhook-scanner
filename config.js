@@ -75,8 +75,8 @@ export default {
     level: "info", // debug, info, warn, error
     logToFile: true,
     logFilePath: "logs/scanner.log",
-    maxLogFileSizeMB: 10,
-    maxLogFiles: 5,
+    maxLogFileSizeMB: 5,
+    maxLogFiles: 10,
     // Whether to log webhook URLs (may expose sensitive information)
     logWebhookUrls: false,
   },
